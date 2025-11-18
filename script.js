@@ -228,14 +228,16 @@ function generatePdf(groupedData) {
 
                 // Page totals - Filter rows belonging to the current page
                 const pageRows = data.table.body.filter(row => row.pageNumber === data.pageNumber);
-                const pagePcs = pageRows.reduce((sum, row) => sum + parseFloat(row.cells[2].content || 0), 0);
-                const pageDz = pageRows.reduce((sum, row) => sum + parseFloat(row.cells[5].content || 0), 0);
-                const pageAmount = pageRows.reduce((sum, row) => sum + parseFloat(row.cells[6].content || 0), 0);
+                const pagePcs = pageRows.reduce((sum, row) => sum + parseFloat(row.cells[2].text || 0), 0);
+                const pageDz = pageRows.reduce((sum, row) => sum + parseFloat(row.cells[5].text || 0), 0);
+                const pageAmount = pageRows.reduce((sum, row) => sum + parseFloat(row.cells[6].text || 0), 0);
 
+                const finalY = doc.autoTable.previous.finalY;
                 doc.autoTable({
                     body: [
                         ['Totals', '', pagePcs.toFixed(0), '', '', pageDz.toFixed(2), pageAmount.toFixed(2), '', '', '', '']
                     ],
+                    startY: finalY + 2,
                     startY: doc.internal.pageSize.height - 30,
                     theme: 'grid',
                     styles: { fontSize: 8, fontStyle: 'bold' },
@@ -246,10 +248,13 @@ function generatePdf(groupedData) {
                     }
                 });
 
-                // Image placeholder and remarks
-                doc.rect(14, doc.autoTable.previous.finalY + 5, 50, 50); // Image box
-                doc.text("Remarks:", 70, doc.autoTable.previous.finalY + 10);
-                doc.text(remarks, 70, doc.autoTable.previous.finalY + 15, { maxWidth: 120 });
+                const bottomContentY = doc.autoTable.previous.finalY + 8;
+                doc.rect(14, bottomContentY, 50, 40); // Image box
+                doc.text("Remarks:", 70, bottomContentY + 5);
+                doc.text(remarks, 70, bottomContentY + 10, { maxWidth: 120 });
+
+                doc.text("Testing Notice:", 14, bottomContentY + 48);
+                doc.text(companyInfo.notice, 14, bottomContentY + 53, { maxWidth: 180 });
             }
         });
     }
