@@ -238,6 +238,7 @@ function generatePdf(groupedData) {
                         ['Totals', '', pagePcs.toFixed(0), '', '', pageDz.toFixed(2), pageAmount.toFixed(2), '', '', '', '']
                     ],
                     startY: finalY + 2,
+                    startY: doc.internal.pageSize.height - 30,
                     theme: 'grid',
                     styles: { fontSize: 8, fontStyle: 'bold' },
                     didParseCell: (cellData) => {
