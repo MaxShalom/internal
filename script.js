@@ -35,14 +35,27 @@ document.addEventListener('DOMContentLoaded', () => {
         poFields.forEach(field => {
             const id = toId(field);
             const div = document.createElement('div');
-            const isDateField = field.includes('Date');
-            const inputType = isDateField ? 'date' : 'text';
-            const placeholder = `Enter ${field}`;
 
-            div.innerHTML = `
-                <label for="${id}" class="block text-sm font-medium text-gray-700">${field}</label>
-                <input type="${inputType}" id="${id}" placeholder="${placeholder}" class="custom-input mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            `;
+            let inputHtml;
+            if (field === "Season") {
+                inputHtml = `
+                    <label for="${id}" class="block text-sm font-medium text-gray-700">${field}</label>
+                    <select id="${id}" class="custom-input mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option>Spring</option>
+                        <option>Fall</option>
+                    </select>
+                `;
+            } else {
+                const isDateField = field.includes('Date');
+                const inputType = isDateField ? 'date' : 'text';
+                const placeholder = `Enter ${field}`;
+                inputHtml = `
+                    <label for="${id}" class="block text-sm font-medium text-gray-700">${field}</label>
+                    <input type="${inputType}" id="${id}" placeholder="${placeholder}" class="custom-input mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                `;
+            }
+
+            div.innerHTML = inputHtml;
             poDetailsContainer.appendChild(div);
         });
 
