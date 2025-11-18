@@ -28,15 +28,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const poDetailsContainer = document.getElementById('po-details-grid');
     if (poDetailsContainer) {
         const poFields = [
-            "PO Date", "PO Number", "Ship Date", "Cancel Date", "Vendor", "Origin", "Ship Terms", "Pay Terms",
+            "PO Date", "Ship Date", "Cancel Date", "PO Number", "Vendor", "Origin", "Ship Terms", "Pay Terms",
             "Destination", "Department", "Class", "Sub Class", "Label/Brand", "Season", "Year",
             "Royalty Code", "Item Description", "Top Fabric", "Bottom Fabric"
         ];
+
         poFields.forEach(field => {
             const id = toId(field);
             const div = document.createElement('div');
+            let inputHtml = '';
 
-            let inputHtml;
             if (field === "Season") {
                 inputHtml = `
                     <label for="${id}" class="block text-sm font-medium text-gray-700">${field}</label>
@@ -44,6 +45,28 @@ document.addEventListener('DOMContentLoaded', () => {
                         <option>Spring</option>
                         <option>Fall</option>
                     </select>
+                `;
+            } else if (field === "Destination") {
+                inputHtml = `
+                    <label for="${id}" class="block text-sm font-medium text-gray-700">${field}</label>
+                    <select id="${id}" class="custom-input mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option>NY</option>
+                        <option>LA</option>
+                        <option>Other</option>
+                    </select>
+                `;
+            } else if (field === "Origin") {
+                inputHtml = `
+                    <label for="${id}" class="block text-sm font-medium text-gray-700">${field}</label>
+                    <select id="${id}" class="custom-input mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option>Egypt</option>
+                        <option>Bangladesh</option>
+                        <option>China</option>
+                        <option>Pakistan</option>
+                        <option>India</option>
+                        <option>Other</option>
+                    </select>
+                    <input type="text" id="${id}-other" placeholder="Enter other origin" class="hidden custom-input mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                 `;
             } else {
                 const isDateField = field.includes('Date');
@@ -54,29 +77,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     <input type="${inputType}" id="${id}" placeholder="${placeholder}" class="custom-input mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                 `;
             }
-
             div.innerHTML = inputHtml;
             poDetailsContainer.appendChild(div);
         });
 
-        // Set default dates
-        const poDate = document.getElementById('po-date');
-        const shipDate = document.getElementById('ship-date');
-        const cancelDate = document.getElementById('cancel-date');
+        // Set default dates and year
+        document.getElementById('po-date').value = formatDate(new Date());
+        const ship = new Date();
+        ship.setMonth(ship.getMonth() + 4);
+        ship.setDate(1);
+        document.getElementById('ship-date').value = formatDate(ship);
+        const cancel = new Date(ship);
+        cancel.setDate(cancel.getDate() + 30);
+        document.getElementById('cancel-date').value = formatDate(cancel);
+        document.getElementById('year').value = '2026';
 
-        if (poDate && shipDate && cancelDate) {
-            const today = new Date();
-            poDate.value = formatDate(today);
-
-            const ship = new Date();
-            ship.setMonth(ship.getMonth() + 4);
-            ship.setDate(1);
-            shipDate.value = formatDate(ship);
-
-            const cancel = new Date(ship);
-            cancel.setDate(cancel.getDate() + 30);
-            cancelDate.value = formatDate(cancel);
-        }
+        // Add event listener for Origin dropdown
+        const originDropdown = document.getElementById('origin');
+        const originOtherInput = document.getElementById('origin-other');
+        originDropdown.addEventListener('change', () => {
+            if (originDropdown.value === 'Other') {
+                originOtherInput.classList.remove('hidden');
+            } else {
+                originOtherInput.classList.add('hidden');
+            }
+        });
     }
 
     const csvUpload = document.getElementById('csv-upload');
@@ -133,13 +158,23 @@ function generatePdf(groupedData) {
 
     const poDetails = {};
     const poFields = [
-        "PO Date", "PO Number", "Ship Date", "Cancel Date", "Vendor", "Origin", "Ship Terms", "Pay Terms",
+        "PO Date", "Ship Date", "Cancel Date", "PO Number", "Vendor", "Origin", "Ship Terms", "Pay Terms",
         "Destination", "Department", "Class", "Sub Class", "Label/Brand", "Season", "Year",
         "Royalty Code", "Item Description", "Top Fabric", "Bottom Fabric"
     ];
+
     poFields.forEach(field => {
         const id = toId(field);
-        poDetails[field] = document.getElementById(id).value;
+        if (field === "Origin") {
+            const dropdown = document.getElementById(id);
+            if (dropdown.value === 'Other') {
+                poDetails[field] = document.getElementById(`${id}-other`).value;
+            } else {
+                poDetails[field] = dropdown.value;
+            }
+        } else {
+            poDetails[field] = document.getElementById(id).value;
+        }
     });
 
     const remarks = document.getElementById('remarks-text').value;
@@ -177,8 +212,10 @@ function generatePdf(groupedData) {
         const filteredPoFields = poFields.filter(field => field !== "PO Number");
         for (let i = 0; i < filteredPoFields.length; i += 2) {
             poDetailsBody.push([
-                filteredPoFields[i], poDetails[filteredPoFields[i]],
-                filteredPoFields[i+1] ? filteredPoFields[i+1] : '', poDetails[filteredPoFields[i+1]] ? poDetails[filteredPoFields[i+1]] : ''
+                { content: filteredPoFields[i], styles: { fontStyle: 'bold', fillColor: '#f3f4f6' } },
+                poDetails[filteredPoFields[i]],
+                filteredPoFields[i+1] ? { content: filteredPoFields[i+1], styles: { fontStyle: 'bold', fillColor: '#f3f4f6' } } : '',
+                filteredPoFields[i+1] ? poDetails[filteredPoFields[i+1]] : ''
             ]);
         }
 
@@ -186,13 +223,7 @@ function generatePdf(groupedData) {
             startY: 40,
             body: poDetailsBody,
             theme: 'grid',
-            styles: { fontSize: 8, cellPadding: 1 },
-            didDrawCell: (data) => {
-                if (data.column.index % 2 === 0) {
-                    data.cell.styles.fontStyle = 'bold';
-                    data.cell.styles.fillColor = '#f3f4f6';
-                }
-            }
+            styles: { fontSize: 8, cellPadding: 1 }
         });
 
         const tableBody = group.map(row => [
@@ -238,7 +269,6 @@ function generatePdf(groupedData) {
                         ['Totals', '', pagePcs.toFixed(0), '', '', pageDz.toFixed(2), pageAmount.toFixed(2), '', '', '', '']
                     ],
                     startY: finalY + 2,
-                    startY: doc.internal.pageSize.height - 30,
                     theme: 'grid',
                     styles: { fontSize: 8, fontStyle: 'bold' },
                     didParseCell: (cellData) => {
@@ -248,13 +278,22 @@ function generatePdf(groupedData) {
                     }
                 });
 
-                const bottomContentY = doc.autoTable.previous.finalY + 8;
-                doc.rect(14, bottomContentY, 50, 40); // Image box
-                doc.text("Remarks:", 70, bottomContentY + 5);
-                doc.text(remarks, 70, bottomContentY + 10, { maxWidth: 120 });
+                const spaceAfterTable = 10;
+                let bottomContentY = doc.autoTable.previous.finalY + spaceAfterTable;
 
-                doc.text("Testing Notice:", 14, bottomContentY + 48);
-                doc.text(companyInfo.notice, 14, bottomContentY + 53, { maxWidth: 180 });
+                // Ensure bottom content doesn't get cut off
+                if (bottomContentY > doc.internal.pageSize.height - 100) {
+                    doc.addPage();
+                    bottomContentY = 20; // Reset Y position on new page
+                }
+
+                doc.rect(14, bottomContentY, 100, 80); // Image box (2x size)
+                doc.text("Remarks:", 120, bottomContentY + 5);
+                doc.text(remarks, 120, bottomContentY + 10, { maxWidth: 70 });
+
+                const noticeY = bottomContentY + 85; // Position notice below the image box
+                doc.text("Testing Notice:", 14, noticeY);
+                doc.text(companyInfo.notice, 14, noticeY + 5, { maxWidth: 180 });
             }
         });
     }
