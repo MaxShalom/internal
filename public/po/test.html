@@ -801,13 +801,13 @@
 
                     // -- 2. MAIN CONTENT BLOCK (Image + Instructions) --
                     // Layout gap
-                    const gapAfterTotals = 8;
+                    const gapAfterTotals = 12; // INCREASED GAP
                     let layoutY = totalsY + gapAfterTotals;
 
                     // Bottom constraints
                     const footerHeight = 15; // Space for legal text + margin
-                    const remarksHeight = 30; // Bigger box for bold red text
-                    const gapBeforeRemarks = 3; 
+                    const remarksHeight = 22; // Height for bold red text box
+                    const gapBeforeRemarks = 8; 
 
                     // Calculate available height for the Image/Instructions block
                     let availableH = pageHeight - layoutY - margin - footerHeight - remarksHeight - gapBeforeRemarks;
@@ -821,8 +821,9 @@
                         availableH = pageHeight - layoutY - margin - footerHeight - remarksHeight - gapBeforeRemarks;
                     }
 
-                    // Use all available height
-                    const sectionH = availableH;
+                    // FIXED: Use a reasonable FIXED height (65mm) for a compact look, 
+                    // instead of expanding to fill everything which looked empty.
+                    const sectionH = 65; 
                     
                     // Width Split: Image gets ~42% width, Instructions ~58%
                     const imgBoxW = contentWidth * 0.42; 
@@ -880,7 +881,7 @@
                     doc.rect(instrCol2X, layoutY, instrCol2W, 7, 'F');
                     
                     // 2. Header Text
-                    doc.setFontSize(7);
+                    doc.setFontSize(6.5); // Slightly smaller font
                     doc.setFont("helvetica", "bold");
                     doc.setTextColor(50);
                     doc.text("TESTING & INSPECTION", instructionsX + 2, layoutY + 4.5);
@@ -908,7 +909,7 @@
                             doc.setFont("helvetica", "normal");
                         }
                         
-                        doc.setFontSize(7); 
+                        doc.setFontSize(6.5); 
                         // Text wrapping
                         const textW = instrCol1W - 8;
                         const splitText = doc.splitTextToSize(label, textW);
