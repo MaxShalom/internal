@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format, differenceInDays, parseISO } from 'date-fns';
-import { Copy, Mail, Archive, AlertCircle, Package, Clock, CheckCircle, Inbox, LogOut } from 'lucide-react';
+import { Copy, Mail, Archive, AlertCircle, Package, Clock, CheckCircle, Inbox, LogOut, Truck } from 'lucide-react';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('new');
