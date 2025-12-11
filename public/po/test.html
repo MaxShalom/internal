@@ -611,7 +611,7 @@
                 const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
                 const pageWidth = doc.internal.pageSize.getWidth(); 
                 const pageHeight = doc.internal.pageSize.getHeight(); 
-                const margin = 12.7; // 0.5 inch margins to maximize space
+                const margin = 15; // Increased Margin (approx 0.6 in)
                 const contentWidth = pageWidth - (margin * 2);
                 const rightAlignX = pageWidth - margin;
 
@@ -775,10 +775,9 @@
                         }
                     });
 
-                    // -- 1. Page Totals Strip (Moved UP) --
+                    // -- 1. Page Totals Strip (Immediately under table) --
                     let totalsY = doc.lastAutoTable.finalY + 2; 
                     
-                    // Check if totals fits
                     if (totalsY + 10 > pageHeight) {
                         doc.addPage();
                         totalsY = margin;
@@ -800,21 +799,32 @@
                     doc.setFont("helvetica", "bold");
                     doc.text(`Total: $${tAmt.toFixed(2)}`, totalX, totalsY + 6.5, { align: 'right' });
 
-                    // -- 2. SIDE BY SIDE: Image & Instructions --
-                    // Layout: Image Box Left (45mm width) | Instructions Right (remaining width)
+                    // -- 2. MAIN CONTENT BLOCK (Image + Instructions) --
+                    // We calculate this to fill the page, leaving space for Remarks + Footer
+                    // Max height remaining calculation:
+                    // Height = PageHeight - (CurrentY + FooterMargin + RemarksHeight + LegalText)
+                    // Footer ~10mm, Remarks ~30mm, Legal ~15mm. Buffer ~10mm.
+                    // Total bottom reserve approx 65mm.
                     
                     let layoutY = totalsY + 14;
-                    const imgBoxW = 45;
-                    const imgBoxH = 45;
-                    const gap = 5;
-                    const instructionsX = margin + imgBoxW + gap;
-                    const instructionsW = contentWidth - imgBoxW - gap;
+                    const availableH = pageHeight - layoutY - 60; // Reserve for remarks & footer
+                    const sectionH = Math.max(availableH, 85); // Minimum 85mm, maximize if space allows
                     
-                    // Page break check for Layout + Remarks (approx 45mm + 25mm)
-                    if (layoutY + 70 > pageHeight) {
+                    // Page break check (If available height is too small, start new page)
+                    if (availableH < 85) {
                         doc.addPage();
                         layoutY = margin;
+                        // Recalculate sectionH for new page
+                        // On new page: 279 - 15 - 60 = ~200mm available
                     }
+                    
+                    // Width Split: Image gets ~45% width, Instructions ~55%
+                    const imgBoxW = contentWidth * 0.42; 
+                    const imgBoxH = sectionH;
+                    const gap = 4;
+                    
+                    const instructionsX = margin + imgBoxW + gap;
+                    const instructionsW = contentWidth - imgBoxW - gap;
 
                     // A. IMAGE BOX (LEFT)
                     const imgObj = styleImages[baseStyle];
@@ -827,8 +837,10 @@
                         let drawH = imgBoxH;
                         
                         if (imgRatio > boxRatio) {
+                            // Image wider than box ratio -> constain width
                             drawH = imgBoxW / imgRatio;
                         } else {
+                            // Image taller than box ratio -> constrain height
                             drawW = imgBoxH * imgRatio;
                         }
                         
@@ -850,122 +862,145 @@
                     }
 
                     // B. INSTRUCTIONS (RIGHT)
-                    // Split instructionsW into 2 cols for Testing and Packing
-                    const instrCol1W = instructionsW * 0.55; 
-                    const instrCol2X = instructionsX + instrCol1W + 2;
-                    const instrCol2W = instructionsW * 0.45 - 2;
-                    const sectionH = 45;
+                    // Split instructionsW into 2 cols: Testing (Narrower) | Packing (Wider)
+                    // Testing text wraps heavily, needs width. Packing is a grid.
+                    const instrCol1W = instructionsW * 0.5; 
+                    const instrCol2X = instructionsX + instrCol1W;
+                    const instrCol2W = instructionsW * 0.5;
 
-                    // Draw Boxes
-                    doc.setDrawColor(220);
+                    // Draw Outer Boxes
+                    doc.setDrawColor(200);
                     doc.setLineWidth(0.1);
-                    doc.rect(instructionsX, layoutY, instrCol1W, sectionH);
-                    doc.rect(instrCol2X, layoutY, instrCol2W, sectionH);
+                    doc.rect(instructionsX, layoutY, instrCol1W, sectionH); // Testing Box
+                    doc.rect(instrCol2X, layoutY, instrCol2W, sectionH);   // Packing Box
                     
                     // Headers
                     doc.setFillColor(240, 242, 245); 
-                    doc.rect(instructionsX, layoutY, instrCol1W, 6, 'F');
-                    doc.rect(instrCol2X, layoutY, instrCol2W, 6, 'F');
-                    doc.rect(instructionsX, layoutY, instrCol1W, sectionH, 'S'); 
-                    doc.rect(instrCol2X, layoutY, instrCol2W, sectionH, 'S');
+                    doc.rect(instructionsX, layoutY, instrCol1W, 7, 'F');
+                    doc.rect(instrCol2X, layoutY, instrCol2W, 7, 'F');
+                    doc.line(instructionsX, layoutY + 7, instructionsX + instrCol1W, layoutY + 7);
+                    doc.line(instrCol2X, layoutY + 7, instrCol2X + instrCol2W, layoutY + 7);
 
                     doc.setFontSize(7);
                     doc.setFont("helvetica", "bold");
                     doc.setTextColor(50);
-                    doc.text("TESTING & INSPECTION", instructionsX + 2, layoutY + 4);
-                    doc.text("PACKING DETAIL", instrCol2X + 2, layoutY + 4);
+                    doc.text("TESTING & INSPECTION", instructionsX + 2, layoutY + 4.5);
+                    doc.text("PACKING DETAIL", instrCol2X + 2, layoutY + 4.5);
 
-                    // Content: Testing (Left Inner Col)
+                    // --- TESTING CONTENT (Left Col) ---
                     doc.setFont("helvetica", "normal");
                     doc.setTextColor(0);
-                    let checkY = layoutY + 9;
-                    const checkSize = 2.5;
+                    let checkY = layoutY + 11;
+                    const checkSize = 3;
                     
                     const drawCheckItem = (label, checked) => {
+                        doc.setDrawColor(150);
                         doc.rect(instructionsX + 2, checkY, checkSize, checkSize); 
                         if(checked) {
                             doc.setFont("zapfdingbats");
-                            doc.setFontSize(6);
-                            doc.text("4", instructionsX + 2.4, checkY + 2.1);
+                            doc.setFontSize(8);
+                            doc.text("4", instructionsX + 2.4, checkY + 2.2);
                             doc.setFont("helvetica", "normal");
                         }
-                        doc.setFontSize(6.5); // Slightly smaller font to wrap less
-                        const splitText = doc.splitTextToSize(label, instrCol1W - 8);
-                        doc.text(splitText, instructionsX + 6, checkY + 2.2);
                         
+                        doc.setFontSize(7); 
+                        // Text wrapping
+                        const textW = instrCol1W - 8;
+                        const splitText = doc.splitTextToSize(label, textW);
+                        doc.text(splitText, instructionsX + 6.5, checkY + 2.5);
+                        
+                        // Dynamic spacing based on text lines
                         const lineCount = splitText.length;
-                        checkY += (lineCount > 1 ? 6.5 : 5.5); // Dynamic spacing
+                        checkY += (lineCount * 3.5) + 3; 
                     };
 
-                    drawCheckItem("CPSIA 101 – Lead in Substrate", compliance.cpsiaLeadSubstrate);
-                    drawCheckItem("CPSIA 101, 16 CFR 1303 – Lead in Paint", compliance.cpsiaLeadPaint);
-                    drawCheckItem("16 CFR 1610 - Flammability (Clothing)", compliance.flammabilityClothing);
-                    drawCheckItem("16 CFR 1615/1616 - Flammability (Sleep)", compliance.flammabilitySleepwear);
+                    drawCheckItem("CPSIA 101 – Lead in Substrate of Children’s Products", compliance.cpsiaLeadSubstrate);
+                    drawCheckItem("CPSIA 101, 16 CFR 1303 – Lead in Paint & Coatings", compliance.cpsiaLeadPaint);
+                    drawCheckItem("16 CFR 1610 - Flammability of Clothing Textiles", compliance.flammabilityClothing);
+                    drawCheckItem("16 CFR 1615/1616 - Flammability of Children’s Sleepwear", compliance.flammabilitySleepwear);
                     drawCheckItem("FULL INSPECTION REPORT", compliance.fullInspection);
 
-                    // Content: Packing (Right Inner Col)
-                    doc.setFont("helvetica", "normal");
-                    doc.setTextColor(0);
-                    let packY = layoutY + 9;
-                    const packX = instrCol2X + 2;
-                    const packValX = instrCol2X + instrCol2W - 2;
+                    // --- PACKING CONTENT (Right Col - Grid Layout) ---
+                    // Draw Grid Lines
+                    const rowH = (sectionH - 7) / 9; // 9 items total
+                    let gridY = layoutY + 7;
+                    
+                    const packLabels = [
+                        { l: "Pre-ticket", v: packing.preTicket },
+                        { l: "Tracking Lbl", v: packing.trackingLabel },
+                        { l: "Hangers", v: packing.hangers },
+                        { l: "Waist Tag", v: packing.waistSizeTag },
+                        { l: "Size Tab", v: packing.sizeTab },
+                        { l: "Hang Tag", v: packing.hangTag },
+                        { l: "Inner Care", v: packing.innerCareLabel },
+                        { l: "Polybags", v: packing.polybags.toUpperCase(), isText: true },
+                        { l: "Color Asst", v: packing.colorAsst.toUpperCase(), isText: true }
+                    ];
 
-                    const drawPackItem = (lbl, val) => {
+                    packLabels.forEach((item, idx) => {
+                        const cellY = gridY + (idx * rowH);
+                        // Divider Line (except first which is header border)
+                        if (idx > 0) {
+                            doc.setDrawColor(230); // Very light gray line
+                            doc.line(instrCol2X + 2, cellY, instrCol2X + instrCol2W - 2, cellY);
+                        }
+                        
+                        // Text Centering vertically
+                        const textY = cellY + (rowH / 2) + 1;
+                        
                         doc.setFont("helvetica", "normal");
-                        doc.setTextColor(0);
-                        doc.text(lbl, packX, packY);
+                        doc.setTextColor(80);
+                        doc.setFontSize(7);
+                        doc.text(item.l, instrCol2X + 3, textY);
                         
                         doc.setFont("helvetica", "bold");
-                        if(val) {
+                        doc.setFontSize(7.5);
+                        
+                        if (item.isText) {
                             doc.setTextColor(0);
-                            doc.text("YES", packValX, packY, { align: 'right' });
+                            doc.text(String(item.v), instrCol2X + instrCol2W - 3, textY, { align: 'right' });
                         } else {
-                            doc.setTextColor(180); 
-                            doc.text("NO", packValX, packY, { align: 'right' });
+                            if(item.v) {
+                                doc.setTextColor(0);
+                                doc.text("YES", instrCol2X + instrCol2W - 3, textY, { align: 'right' });
+                            } else {
+                                doc.setTextColor(200); // Faint gray for NO
+                                doc.text("NO", instrCol2X + instrCol2W - 3, textY, { align: 'right' });
+                            }
                         }
-                        packY += 4.5;
-                    };
-
-                    drawPackItem("Pre-ticket", packing.preTicket);
-                    drawPackItem("Tracking Lbl", packing.trackingLabel);
-                    drawPackItem("Hangers", packing.hangers);
-                    drawPackItem("Waist Tag", packing.waistSizeTag);
-                    drawPackItem("Size Tab", packing.sizeTab);
-                    drawPackItem("Hang Tag", packing.hangTag);
-                    drawPackItem("Inner Care", packing.innerCareLabel);
-                    
-                    // Special non-boolean items
-                    packY += 1;
-                    doc.setFont("helvetica", "normal");
-                    doc.setTextColor(0);
-                    doc.text("Polybags:", packX, packY);
-                    doc.setFont("helvetica", "bold");
-                    doc.text(packing.polybags.toUpperCase(), packValX, packY, { align: 'right' });
-                    packY += 4.5;
-
-                    doc.setFont("helvetica", "normal");
-                    doc.text("Color Asst:", packX, packY);
-                    doc.setFont("helvetica", "bold");
-                    doc.text(packing.colorAsst.toUpperCase(), packValX, packY, { align: 'right' });
+                    });
 
                     // -- REMARKS --
-                    const remarksBoxY = layoutY + 45 + 2; // Below the 45mm tall image/instruction block
+                    const remarksBoxY = layoutY + sectionH + 3;
+                    const remarksH = 25; // Bigger box
+                    
                     doc.setDrawColor(220);
-                    doc.roundedRect(margin, remarksBoxY, contentWidth, 15, 1, 1); // Reduced height slightly
-                    doc.setFontSize(8);
+                    doc.setLineWidth(0.3); // Thicker border
+                    doc.roundedRect(margin, remarksBoxY, contentWidth, remarksH, 1, 1);
+                    
+                    doc.setFontSize(9);
                     doc.setFont("helvetica", "bold");
                     doc.setTextColor(0);
-                    doc.text("Remarks:", margin + 2, remarksBoxY + 4);
-                    doc.setFont("helvetica", "normal");
+                    doc.text("Remarks / Special Instructions:", margin + 3, remarksBoxY + 5);
+                    
+                    doc.setFontSize(10); // Larger Font
+                    doc.setTextColor(220, 38, 38); // Red Color (Tailwind Red-600 approx)
+                    
                     const remarksText = remarks.trim() || "No remarks";
-                    doc.text(remarksText, margin + 18, remarksBoxY + 4, { maxWidth: contentWidth - 22 });
+                    // Split remarks to fit width
+                    const splitRemarks = doc.splitTextToSize(remarksText, contentWidth - 6);
+                    doc.text(splitRemarks, margin + 3, remarksBoxY + 10);
 
-                    doc.setFontSize(8);
+                    // Legal Footer
+                    doc.setFontSize(7); // Smaller legal text
                     doc.setFont("helvetica", "bold");
-                    doc.setTextColor(0);
+                    doc.setTextColor(80);
                     const legalText = globalData.legal.replace(/\n/g, " "); 
                     const splitLegal = doc.splitTextToSize(legalText, contentWidth);
-                    doc.text(splitLegal, pageWidth / 2, remarksBoxY + 20, { align: "center" });
+                    
+                    // Position at bottom of page margin
+                    const footerY = pageHeight - margin - 2;
+                    doc.text(splitLegal, pageWidth / 2, footerY, { align: "center", baseline: "bottom" });
                 });
 
                 doc.save(`PO_${poDetails.poNumber || 'Draft'}.pdf`);
