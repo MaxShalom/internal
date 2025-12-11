@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format, differenceInDays, parseISO } from 'date-fns';
-import { Copy, Mail, Archive, AlertCircle } from 'lucide-react';
+import { Copy, Mail, Archive, AlertCircle, Package, Clock, CheckCircle, Inbox, LogOut } from 'lucide-react';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('new');
@@ -43,9 +43,9 @@ const Dashboard = () => {
   };
 
   const getStatusColor = (days) => {
-    if (days < 7) return 'bg-green-100 text-green-800 border-green-200';
-    if (days < 14) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    return 'bg-red-100 text-red-800 border-red-200';
+    if (days < 7) return 'bg-emerald-100 text-emerald-800 ring-emerald-600/20';
+    if (days < 14) return 'bg-amber-100 text-amber-800 ring-amber-600/20';
+    return 'bg-rose-100 text-rose-800 ring-rose-600/20';
   };
 
   const filteredSubmissions = submissions.filter(sub => {
@@ -64,21 +64,21 @@ const Dashboard = () => {
   const generateEmailTable = (factorySubs) => {
     const tableRows = factorySubs.map(sub => `
       <tr>
-        <td style="border: 1px solid #ddd; padding: 8px;">${sub.styleNumber}</td>
-        <td style="border: 1px solid #ddd; padding: 8px;">${sub.dateSent}</td>
-        <td style="border: 1px solid #ddd; padding: 8px;">${sub.sampleType}</td>
-        <td style="border: 1px solid #ddd; padding: 8px;">${sub.comments || ''}</td>
+        <td style="border: 1px solid #e2e8f0; padding: 12px; color: #1e293b;">${sub.styleNumber}</td>
+        <td style="border: 1px solid #e2e8f0; padding: 12px; color: #1e293b;">${sub.dateSent}</td>
+        <td style="border: 1px solid #e2e8f0; padding: 12px; color: #1e293b;">${sub.sampleType}</td>
+        <td style="border: 1px solid #e2e8f0; padding: 12px; color: #1e293b;">${sub.comments || ''}</td>
       </tr>
     `).join('');
 
     return `
-      <table style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif;">
+      <table style="border-collapse: collapse; width: 100%; font-family: sans-serif; font-size: 14px;">
         <thead>
-          <tr style="background-color: #f2f2f2;">
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Style</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Date Sent</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Sample Type</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Comment</th>
+          <tr style="background-color: #f8fafc;">
+            <th style="border: 1px solid #e2e8f0; padding: 12px; text-align: left; color: #475569; font-weight: 600;">Style</th>
+            <th style="border: 1px solid #e2e8f0; padding: 12px; text-align: left; color: #475569; font-weight: 600;">Date Sent</th>
+            <th style="border: 1px solid #e2e8f0; padding: 12px; text-align: left; color: #475569; font-weight: 600;">Sample Type</th>
+            <th style="border: 1px solid #e2e8f0; padding: 12px; text-align: left; color: #475569; font-weight: 600;">Comment</th>
           </tr>
         </thead>
         <tbody>
@@ -102,156 +102,186 @@ const Dashboard = () => {
   };
 
   const handleOpenMail = (factorySubs) => {
-     // Mailto has limited support for body formatting, so we just provide a hint
      const body = "Please see the table below regarding your submissions:\n\n[PASTE TABLE HERE]\n\n";
      window.location.href = `mailto:?subject=Submission Feedback&body=${encodeURIComponent(body)}`;
   };
 
-  if (loading) return <div className="p-8 text-center">Loading...</div>;
+  if (loading) return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-gray-800">Admin Dashboard</h1>
-              </div>
-              <div className="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8">
-                {['new', 'pending', 'archived'].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`${
-                      activeTab === tab
-                        ? 'border-blue-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium capitalize`}
-                  >
-                    {tab} Submissions
-                  </button>
-                ))}
-              </div>
+    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans">
+
+      {/* Sidebar Navigation */}
+      <div className="w-full md:w-64 bg-slate-900 text-white flex-shrink-0 flex flex-col justify-between">
+        <div>
+            <div className="h-20 flex items-center px-6 border-b border-slate-800">
+                <Package className="h-6 w-6 text-indigo-400 mr-3" />
+                <span className="text-lg font-bold tracking-tight">Admin<span className="text-indigo-400">Panel</span></span>
             </div>
-          </div>
+            <div className="p-4 space-y-1">
+                {[
+                    { id: 'new', label: 'New Submissions', icon: Inbox },
+                    { id: 'pending', label: 'Pending Review', icon: Clock },
+                    { id: 'archived', label: 'Archived', icon: Archive }
+                ].map((item) => (
+                    <button
+                        key={item.id}
+                        onClick={() => setActiveTab(item.id)}
+                        className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all ${
+                            activeTab === item.id
+                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50'
+                            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        }`}
+                    >
+                        <item.icon className={`h-5 w-5 mr-3 ${activeTab === item.id ? 'text-white' : 'text-slate-500'}`} />
+                        {item.label}
+                    </button>
+                ))}
+            </div>
+        </div>
+        <div className="p-4 border-t border-slate-800">
+             <button onClick={() => window.location.reload()} className="w-full flex items-center px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
+                <LogOut className="h-4 w-4 mr-3" />
+                Sign Out
+             </button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {Object.keys(groupedSubmissions).length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            No {activeTab} submissions found.
-          </div>
-        ) : (
-          Object.entries(groupedSubmissions).map(([factory, subs]) => (
-            <div key={factory} className="mb-8">
-              <div className="flex items-center justify-between mb-4">
-                 <h2 className="text-xl font-semibold text-gray-800 border-l-4 border-blue-500 pl-3">
-                  {factory}
-                </h2>
-                {activeTab === 'pending' && (
-                  <div className="flex space-x-2">
-                    <button
-                        onClick={() => handleCopyEmail(subs)}
-                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                        <Copy className="h-4 w-4 mr-2" />
-                        Copy Table
-                    </button>
-                    <button
-                        onClick={() => handleOpenMail(subs)}
-                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                        <Mail className="h-4 w-4 mr-2" />
-                        Draft Email
-                    </button>
-                  </div>
-                )}
-              </div>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Header */}
+        <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-8 shadow-sm z-10">
+            <h2 className="text-xl font-bold text-slate-800 capitalize">{activeTab.replace('-', ' ')} Submissions</h2>
+            <div className="flex items-center space-x-4">
+                <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs border border-indigo-200">
+                    JD
+                </div>
+            </div>
+        </header>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {subs.map(sub => {
-                    const days = getDaysSinceSent(sub.dateSent);
-                    const colorClass = getStatusColor(days);
+        {/* Scrollable Content */}
+        <main className="flex-1 overflow-y-auto p-8 bg-slate-50/50">
+            {Object.keys(groupedSubmissions).length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                <div className="bg-white p-6 rounded-full shadow-sm mb-4">
+                    <Inbox className="h-12 w-12 text-slate-300" />
+                </div>
+                <p className="text-lg font-medium">No {activeTab} submissions found.</p>
+                <p className="text-sm">New items will appear here.</p>
+            </div>
+            ) : (
+            Object.entries(groupedSubmissions).map(([factory, subs]) => (
+                <div key={factory} className="mb-10 last:mb-0">
+                <div className="flex items-center justify-between mb-5 sticky top-0 bg-slate-50/95 backdrop-blur py-2 z-10 border-b border-slate-200/50">
+                    <div className="flex items-center">
+                        <div className="w-1 h-6 bg-indigo-500 rounded-full mr-3"></div>
+                        <h2 className="text-lg font-bold text-slate-800">{factory}</h2>
+                        <span className="ml-3 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200">
+                            {subs.length} items
+                        </span>
+                    </div>
+                    {activeTab === 'pending' && (
+                    <div className="flex space-x-3">
+                        <button
+                            onClick={() => handleCopyEmail(subs)}
+                            className="inline-flex items-center px-3 py-1.5 border border-slate-200 shadow-sm text-xs font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+                        >
+                            <Copy className="h-3.5 w-3.5 mr-2" />
+                            Copy Table
+                        </button>
+                        <button
+                            onClick={() => handleOpenMail(subs)}
+                            className="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+                        >
+                            <Mail className="h-3.5 w-3.5 mr-2" />
+                            Draft Email
+                        </button>
+                    </div>
+                    )}
+                </div>
 
-                    return (
-                        <div key={sub.id} className="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
-                            <div className="px-4 py-5 sm:p-6">
-                                <div className="flex justify-between items-start mb-4">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClass}`}>
-                                        {days} days ago
-                                    </span>
-                                    <span className="text-xs text-gray-500">{sub.dateSent}</span>
-                                </div>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {subs.map(sub => {
+                        const days = getDaysSinceSent(sub.dateSent);
+                        const colorClass = getStatusColor(days);
 
-                                <dl className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2 mb-4">
-                                    <div className="sm:col-span-1">
-                                        <dt className="text-sm font-medium text-gray-500">Style</dt>
-                                        <dd className="mt-1 text-sm text-gray-900 font-semibold">{sub.styleNumber}</dd>
-                                    </div>
-                                    <div className="sm:col-span-1">
-                                        <dt className="text-sm font-medium text-gray-500">Sample Type</dt>
-                                        <dd className="mt-1 text-sm text-gray-900">{sub.sampleType}</dd>
-                                    </div>
-                                    <div className="sm:col-span-1">
-                                        <dt className="text-sm font-medium text-gray-500">Season/Year</dt>
-                                        <dd className="mt-1 text-sm text-gray-900">{sub.season} {sub.year}</dd>
-                                    </div>
-                                     <div className="sm:col-span-1">
-                                        <dt className="text-sm font-medium text-gray-500">Tracking</dt>
-                                        <dd className="mt-1 text-sm text-gray-900 truncate" title={sub.trackingNumber}>
-                                            {sub.shipper} - {sub.trackingNumber}
-                                        </dd>
-                                    </div>
-                                </dl>
-
-                                <div className="mt-4">
-                                    <label htmlFor={`comment-${sub.id}`} className="block text-sm font-medium text-gray-700">
-                                        Comments
-                                    </label>
-                                    {activeTab === 'new' ? (
-                                        <textarea
-                                            id={`comment-${sub.id}`}
-                                            rows={3}
-                                            className="shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md p-2"
-                                            placeholder="Enter feedback..."
-                                            defaultValue={sub.comments || ''}
-                                            onBlur={(e) => updateSubmission(sub.id, { comments: e.target.value })}
-                                        />
-                                    ) : (
-                                        <div className="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded-md min-h-[4rem]">
-                                            {sub.comments || 'No comments'}
+                        return (
+                            <div key={sub.id} className="group bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-indigo-100 transition-all duration-300 flex flex-col">
+                                <div className="p-5 flex-1">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ring-1 ring-inset ${colorClass}`}>
+                                            <Clock className="w-3 h-3 mr-1" />
+                                            {days} days ago
                                         </div>
+                                        <span className="text-xs font-medium text-slate-400">{sub.dateSent}</span>
+                                    </div>
+
+                                    <h3 className="text-lg font-bold text-slate-900 mb-1">{sub.styleNumber}</h3>
+                                    <p className="text-sm text-slate-500 mb-4">{sub.season} {sub.year} • {sub.sampleType}</p>
+
+                                    <div className="space-y-3 border-t border-slate-100 pt-3">
+                                        <div className="flex items-center text-xs text-slate-600">
+                                            <Truck className="w-3.5 h-3.5 mr-2 text-slate-400" />
+                                            <span className="font-medium mr-1">{sub.shipper}</span>
+                                            <span className="text-slate-400 truncate max-w-[100px]" title={sub.trackingNumber}>{sub.trackingNumber}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-5">
+                                        <label htmlFor={`comment-${sub.id}`} className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                            Internal Feedback
+                                        </label>
+                                        {activeTab === 'new' ? (
+                                            <textarea
+                                                id={`comment-${sub.id}`}
+                                                rows={3}
+                                                className="block w-full rounded-lg border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-sm p-3 placeholder-slate-400 bg-slate-50 focus:bg-white transition-all resize-none"
+                                                placeholder="Write your feedback here..."
+                                                defaultValue={sub.comments || ''}
+                                                onBlur={(e) => updateSubmission(sub.id, { comments: e.target.value })}
+                                            />
+                                        ) : (
+                                            <div className="bg-slate-50 rounded-lg p-3 text-sm text-slate-700 border border-slate-100 min-h-[4rem]">
+                                                {sub.comments || <span className="text-slate-400 italic">No comments provided.</span>}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="bg-slate-50/50 px-5 py-3 border-t border-slate-100 rounded-b-xl flex justify-end">
+                                    {activeTab === 'new' && (
+                                        <button
+                                            onClick={() => updateSubmission(sub.id, { status: 'Pending' })}
+                                            className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm hover:shadow transition-all"
+                                        >
+                                            <CheckCircle className="w-4 h-4 mr-2" />
+                                            Submit Review
+                                        </button>
+                                    )}
+                                    {activeTab === 'pending' && (
+                                        <button
+                                            onClick={() => updateSubmission(sub.id, { status: 'Archived' })}
+                                            className="inline-flex items-center px-3 py-1.5 border border-slate-200 text-xs font-medium rounded-md text-slate-600 bg-white hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+                                        >
+                                            <Archive className="h-3.5 w-3.5 mr-1.5" />
+                                            Archive
+                                        </button>
+                                    )}
+                                     {activeTab === 'archived' && (
+                                        <span className="text-xs text-slate-400 italic">Archived</span>
                                     )}
                                 </div>
                             </div>
-                            <div className="bg-gray-50 px-4 py-4 sm:px-6 flex justify-end">
-                                {activeTab === 'new' && (
-                                    <button
-                                        onClick={() => updateSubmission(sub.id, { status: 'Pending' })}
-                                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                    >
-                                        Submit Feedback
-                                    </button>
-                                )}
-                                {activeTab === 'pending' && (
-                                    <button
-                                        onClick={() => updateSubmission(sub.id, { status: 'Archived' })}
-                                        className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
-                                    >
-                                        <Archive className="h-3 w-3 mr-1" />
-                                        Archive
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
-              </div>
-            </div>
-          ))
-        )}
+                        );
+                    })}
+                </div>
+                </div>
+            ))
+            )}
+        </main>
       </div>
     </div>
   );

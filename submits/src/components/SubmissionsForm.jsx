@@ -1,6 +1,27 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Send } from 'lucide-react';
+import { Plus, Trash2, Send, Package, Truck, Calendar } from 'lucide-react';
 import { format, addMonths } from 'date-fns';
+
+const InputGroup = ({ label, children, className = "" }) => (
+  <div className={`flex flex-col ${className}`}>
+    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">{label}</label>
+    {children}
+  </div>
+);
+
+const StyledInput = (props) => (
+  <input
+    {...props}
+    className="block w-full rounded-lg border-slate-200 bg-slate-50 border px-3 py-2.5 text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all duration-200 ease-in-out sm:text-sm"
+  />
+);
+
+const StyledSelect = (props) => (
+  <select
+    {...props}
+    className="block w-full rounded-lg border-slate-200 bg-slate-50 border px-3 py-2.5 text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all duration-200 ease-in-out sm:text-sm"
+  />
+);
 
 const SubmissionsForm = () => {
   const [factoryName, setFactoryName] = useState('');
@@ -19,8 +40,6 @@ const SubmissionsForm = () => {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const defaultYear = new Date().getFullYear();
-  // Requirement: Year default to the year in 3 months from now
   const futureYear = addMonths(new Date(), 3).getFullYear();
 
   const handleAddRow = () => {
@@ -93,13 +112,13 @@ const SubmissionsForm = () => {
 
   if (submitted) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
-        <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-md w-full">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Send className="w-8 h-8 text-green-600" />
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-4">
+        <div className="bg-white p-10 rounded-2xl shadow-xl text-center max-w-lg w-full ring-1 ring-slate-900/5">
+          <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Send className="w-10 h-10 text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Submission Successful!</h2>
-          <p className="text-gray-600 mb-6">Thank you for updating us with your samples. Your submission has been recorded.</p>
+          <h2 className="text-3xl font-bold text-slate-900 mb-3">Sent Successfully</h2>
+          <p className="text-slate-600 mb-8 text-lg">Thank you! Your sample submission has been recorded in our system.</p>
           <button
             onClick={() => {
               setSubmitted(false);
@@ -115,9 +134,9 @@ const SubmissionsForm = () => {
               }]);
               setFactoryName('');
             }}
-            className="text-blue-600 hover:text-blue-800 font-medium"
+            className="text-indigo-600 hover:text-indigo-800 font-semibold px-6 py-2 rounded-full hover:bg-indigo-50 transition-colors"
           >
-            Submit more samples
+            Submit Another Batch
           </button>
         </div>
       </div>
@@ -125,175 +144,187 @@ const SubmissionsForm = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight sm:text-4xl">
-            Factory Submission Portal
-          </h1>
-          <p className="mt-4 text-lg text-gray-500">
-            Please report your sample, lab dip, and strike off submissions below.
-          </p>
+    <div className="min-h-screen bg-slate-50/50">
+      {/* Header */}
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+           <div className="flex items-center space-x-3">
+              <div className="bg-indigo-600 p-2 rounded-lg">
+                <Package className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+                Factory<span className="text-indigo-600">Portal</span>
+              </h1>
+           </div>
+           <div className="text-sm text-slate-500 font-medium hidden sm:block">
+              Submit Samples & Dips
+           </div>
         </div>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="bg-white shadow-sm rounded-lg p-6 border border-gray-200">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Factory Name</label>
-            <input
-              type="text"
-              required
-              value={factoryName}
-              onChange={(e) => setFactoryName(e.target.value)}
-              className="block w-full max-w-md rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-              placeholder="Enter your factory name"
-            />
+      <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <form onSubmit={handleSubmit} className="space-y-10">
+
+          {/* Factory Info */}
+          <div className="max-w-xl mx-auto text-center space-y-4">
+             <h2 className="text-3xl font-bold text-slate-900">New Submission</h2>
+             <p className="text-slate-500">Enter your factory details and list the samples you are sending today.</p>
+             <div className="pt-4">
+                <StyledInput
+                  type="text"
+                  required
+                  value={factoryName}
+                  onChange={(e) => setFactoryName(e.target.value)}
+                  placeholder="Enter Factory Name"
+                  className="block w-full rounded-xl border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-lg py-4 px-6 text-center placeholder-slate-400"
+                  style={{ fontSize: '1.125rem' }}
+                />
+             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             {submissions.map((sub, index) => (
-              <div key={index} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100 transition-all hover:shadow-xl">
-                <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                  <h3 className="text-lg font-medium text-gray-900">Submission #{index + 1}</h3>
+              <div key={index} className="group bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md hover:border-indigo-200 transition-all duration-300">
+                <div className="bg-slate-50/80 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                  <div className="flex items-center space-x-2">
+                     <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold">
+                        {index + 1}
+                     </span>
+                     <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Item Details</h3>
+                  </div>
                   {submissions.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveRow(index)}
-                      className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded-full transition-colors"
+                      className="text-slate-400 hover:text-red-500 p-2 hover:bg-red-50 rounded-full transition-all"
                     >
-                      <Trash2 className="w-5 h-5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   )}
                 </div>
 
-                <div className="p-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2 lg:grid-cols-4">
-                  {/* Style Number */}
-                  <div className="sm:col-span-1">
-                    <label className="block text-sm font-medium text-gray-700">Style Number</label>
-                    <input
+                <div className="p-6 grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-2 lg:grid-cols-4">
+                  {/* Row 1 */}
+                  <InputGroup label="Style Number">
+                    <StyledInput
                       type="text"
                       required
+                      placeholder="e.g. ST-2024"
                       value={sub.styleNumber}
                       onChange={(e) => handleChange(index, 'styleNumber', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 border shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
                     />
-                  </div>
+                  </InputGroup>
 
-                  {/* Season */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Season</label>
-                    <select
-                      value={sub.season}
-                      onChange={(e) => handleChange(index, 'season', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 border shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
-                    >
-                      <option>Spring</option>
-                      <option>Fall</option>
-                    </select>
-                  </div>
-
-                  {/* Year */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Year</label>
-                    <input
-                      type="number"
-                      required
-                      value={sub.year}
-                      onChange={(e) => handleChange(index, 'year', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 border shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
-                    />
-                  </div>
-
-                  {/* Date Sent */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Date Sent</label>
-                    <input
-                      type="date"
-                      required
-                      value={sub.dateSent}
-                      onChange={(e) => handleChange(index, 'dateSent', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 border shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
-                    />
-                  </div>
-
-                  {/* Sample Type */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Sample Type</label>
-                    <select
+                  <InputGroup label="Sample Type">
+                    <StyledSelect
                       value={sub.sampleType}
                       onChange={(e) => handleChange(index, 'sampleType', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 border shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
                     >
                       <option>Lab Dip</option>
                       <option>Strike Off</option>
                       <option>PP Sample</option>
                       <option>TOP Sample</option>
-                    </select>
-                  </div>
+                    </StyledSelect>
+                  </InputGroup>
 
-                  {/* Shipper */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Shipper</label>
-                    <select
+                   <InputGroup label="Season">
+                    <StyledSelect
+                      value={sub.season}
+                      onChange={(e) => handleChange(index, 'season', e.target.value)}
+                    >
+                      <option>Spring</option>
+                      <option>Fall</option>
+                    </StyledSelect>
+                  </InputGroup>
+
+                  <InputGroup label="Year">
+                    <StyledInput
+                      type="number"
+                      required
+                      value={sub.year}
+                      onChange={(e) => handleChange(index, 'year', e.target.value)}
+                    />
+                  </InputGroup>
+
+                  {/* Row 2 */}
+                  <InputGroup label="Date Sent">
+                     <div className="relative">
+                        <StyledInput
+                        type="date"
+                        required
+                        value={sub.dateSent}
+                        onChange={(e) => handleChange(index, 'dateSent', e.target.value)}
+                        />
+                        <Calendar className="absolute right-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none" />
+                     </div>
+                  </InputGroup>
+
+                  <InputGroup label="Shipper">
+                    <StyledSelect
                       value={sub.shipper}
                       onChange={(e) => handleChange(index, 'shipper', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 border shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
                     >
                       <option>DHL</option>
                       <option>FedEx</option>
                       <option>UPS</option>
                       <option>Other</option>
-                    </select>
-                  </div>
+                    </StyledSelect>
+                  </InputGroup>
 
-                  {/* Other Shipper Input */}
-                  {sub.shipper === 'Other' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Specify Shipper</label>
-                      <input
+                  {sub.shipper === 'Other' ? (
+                    <InputGroup label="Specify Shipper">
+                      <StyledInput
                         type="text"
                         required
+                        placeholder="Carrier Name"
                         value={sub.otherShipper}
                         onChange={(e) => handleChange(index, 'otherShipper', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-gray-300 border shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
                       />
-                    </div>
+                    </InputGroup>
+                  ) : (
+                     <div className="hidden lg:block"></div>
                   )}
 
-                  {/* Tracking Number */}
-                  <div className="sm:col-span-1 lg:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700">Tracking Number</label>
-                    <input
-                      type="text"
-                      required
-                      value={sub.trackingNumber}
-                      onChange={(e) => handleChange(index, 'trackingNumber', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 border shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
-                    />
-                  </div>
+                  <InputGroup label="Tracking Number" className="lg:col-span-1">
+                    <div className="relative">
+                        <StyledInput
+                        type="text"
+                        required
+                        placeholder="Tracking ID"
+                        value={sub.trackingNumber}
+                        onChange={(e) => handleChange(index, 'trackingNumber', e.target.value)}
+                        />
+                         <Truck className="absolute right-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+                  </InputGroup>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="flex justify-between items-center pt-4">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-8">
             <button
               type="button"
               onClick={handleAddRow}
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border-2 border-dashed border-slate-300 shadow-sm text-sm font-semibold rounded-xl text-slate-600 bg-white hover:bg-slate-50 hover:border-indigo-400 hover:text-indigo-600 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              <Plus className="-ml-1 mr-2 h-5 w-5" />
-              Add Another Submission
+              <Plus className="mr-2 h-5 w-5" />
+              Add Another Item
             </button>
 
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className="w-full sm:w-auto inline-flex justify-center items-center px-8 py-3.5 border border-transparent shadow-lg shadow-indigo-500/30 text-base font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:hover:translate-y-0"
             >
-              {loading ? 'Submitting...' : 'Submit All'}
+              {loading ? 'Submitting...' : 'Submit All Samples'}
             </button>
           </div>
         </form>
+      </div>
+
+      <div className="py-6 text-center text-slate-400 text-sm">
+        &copy; {new Date().getFullYear()} Company Name. All rights reserved.
       </div>
     </div>
   );
